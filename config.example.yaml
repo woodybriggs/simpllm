@@ -1,0 +1,77 @@
+# simpllm configuration
+# Secrets are referenced with $ref (resolved from system keyring at startup).
+
+listen:
+  http: ":8080"
+  unix: "/tmp/simpllm.sock"
+
+# Virtual models map incoming model names to upstreams.
+models:
+  - name: "gpt-4o"
+    upstreams:
+      - url: "https://api.openai.com/v1/chat/completions"
+        headers:
+          authorization:
+            value:
+              $ref: "#/secrets/OPENAI_API_KEY"
+            prefix: "Bearer "
+        wire_format: "openai/chat/completions"
+
+  - name: "gpt-4o-mini"
+    upstreams:
+      - url: "https://api.openai.com/v1/chat/completions"
+        headers:
+          authorization:
+            value:
+              $ref: "#/secrets/OPENAI_API_KEY"
+            prefix: "Bearer "
+        wire_format: "openai/chat/completions"
+
+  - name: "claude-sonnet-4-20250514"
+    upstreams:
+      - url: "https://api.anthropic.com/v1/messages"
+        headers:
+          x-api-key:
+            value:
+              $ref: "#/secrets/ANTHROPIC_API_KEY"
+          anthropic-version: "2023-06-01"
+        wire_format: "anthropic/messages"
+
+  - name: "claude-via-openai"
+    upstreams:
+      - url: "https://api.anthropic.com/v1/messages"
+        headers:
+          x-api-key:
+            value:
+              $ref: "#/secrets/ANTHROPIC_API_KEY"
+          anthropic-version: "2023-06-01"
+        wire_format: "anthropic/messages"
+
+  - name: "gpt-via-anthropic"
+    upstreams:
+      - url: "https://api.openai.com/v1/chat/completions"
+        headers:
+          authorization:
+            value:
+              $ref: "#/secrets/OPENAI_API_KEY"
+            prefix: "Bearer "
+        wire_format: "openai/chat/completions"
+
+  - name: "llama3"
+    upstreams:
+      - url: "http://localhost:11434/v1/chat/completions"
+        wire_format: "openai/chat/completions"
+
+  - name: "gpt-4o-fallback"
+    upstreams:
+      - url: "https://api.openai.com/v1/chat/completions"
+        headers:
+          authorization:
+            value:
+              $ref: "#/secrets/OPENAI_API_KEY"
+            prefix: "Bearer "
+        wire_format: "openai/chat/completions"
+        weight: 3
+      - url: "http://localhost:11434/v1/chat/completions"
+        wire_format: "openai/chat/completions"
+        weight: 1
