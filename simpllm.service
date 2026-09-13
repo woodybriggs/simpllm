@@ -1,0 +1,20 @@
+[Unit]
+Description=simpllm - local AI model request proxy
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/simpllm -config %h/.config/simpllm/config.yaml
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%t simpllm
+
+# Environment
+Environment=HOME=%h
+
+[Install]
+WantedBy=default.target
