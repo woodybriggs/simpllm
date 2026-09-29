@@ -75,3 +75,15 @@ models:
       - url: "http://localhost:11434/v1/chat/completions"
         wire_format: "openai/chat/completions"
         weight: 1
+
+  # System One (Decisions) — typed classification questions → structured answers.
+  # This is a passthrough format: no translation between wire formats.
+  - name: "jev-latest"
+    upstreams:
+      - url: "https://openrouter.ai/api/v1/systemone"
+        headers:
+          authorization:
+            value:
+              $ref: "#/secrets/OPENROUTER_API_KEY"
+            prefix: "Bearer "
+        wire_format: "systemone"

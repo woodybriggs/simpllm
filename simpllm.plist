@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.simpllm.daemon</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOU/.local/bin/simpllm</string>
+        <string>-config</string>
+        <string>/Users/YOU/.config/simpllm/config.yaml</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOU/Library/Logs/simpllm.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/YOU/Library/Logs/simpllm.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/Users/YOU</string>
+    </dict>
+
+    <!-- Socket activation: launchd creates the socket and passes FD 3 to simpllm -->
+    <key>Sockets</key>
+    <dict>
+        <key>Socket</key>
+        <dict>
+            <key>SockType</key>
+            <string>stream</string>
+            <key>SockPathName</key>
+            <string>/Users/YOU/Library/Sockets/simpllm.sock</string>
+            <key>SockPathMode</key>
+            <integer>438</integer>
+        </dict>
+    </dict>
+</dict>
+</plist>

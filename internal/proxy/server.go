@@ -46,6 +46,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/v1/images/generations", s.handleImage)
 	s.mux.HandleFunc("/v1/responses", s.handleResponses)
 	s.mux.HandleFunc("/v1/messages", s.handleMessages)
+	s.mux.HandleFunc("/v1/systemone", s.handleSystemOne)
 	s.mux.HandleFunc("/health", s.handleHealth)
 	s.mux.HandleFunc("/v1/models", s.handleModels)
 }
@@ -103,6 +104,20 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.proxy(w, r, body, probe.Model, formats.WireOpenAIResponses, probe.Stream)
+}
+
+func (s *Server) handleSystemOne(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.error(w, http.StatusBadRequest, "failed to read request body")
+		return
+	}
+	model, err := formats.ParseSystemOne(body)
+	if err != nil {
+		s.error(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	s.proxyPassthrough(w, r, body, model, formats.WireSystemOne)
 }
 
 func (s *Server) handleEmbed(w http.ResponseWriter, r *http.Request) {

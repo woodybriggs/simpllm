@@ -1,0 +1,9 @@
+[Unit]
+Description=simpllm unix socket
+
+[Socket]
+ListenStream=%t/simpllm.sock
+SocketMode=0666
+
+[Install]
+WantedBy=sockets.target

@@ -23,6 +23,7 @@ const (
 	WireOpenAIChatCompletions WireFormat = "openai/chat/completions"
 	WireAnthropicMessages     WireFormat = "anthropic/messages"
 	WireOpenAIResponses       WireFormat = "openai/responses"
+	WireSystemOne             WireFormat = "systemone"
 )
 
 // TranslateRequest converts an incoming request body from sourceFormat to targetFormat.
