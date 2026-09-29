@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/woodybriggs/simpllm/internal/activation"
 	"github.com/woodybriggs/simpllm/internal/config"
 	"github.com/woodybriggs/simpllm/internal/proxy"
 )
@@ -29,88 +31,161 @@ func main() {
 	}
 
 	configPath := flag.String("config", "", "path to config file (disables auto-merge)")
+	noWatch := flag.Bool("no-watch", false, "disable config file watching")
 	flag.Parse()
 
-	// Load config with merge support.
-	cfg, err := config.Load(*configPath)
-	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+	if err := run(*configPath, *noWatch); err != nil {
+		log.Fatalf("simpllm: %v", err)
+	}
+}
+
+// hotHandler wraps the current handler and allows atomic swaps.
+type hotHandler struct {
+	mu      sync.RWMutex
+	handler http.Handler
+}
+
+func (h *hotHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.mu.RLock()
+	hh := h.handler
+	h.mu.RUnlock()
+	hh.ServeHTTP(w, r)
+}
+
+func (h *hotHandler) Swap(handler http.Handler) {
+	h.mu.Lock()
+	h.handler = handler
+	h.mu.Unlock()
+}
+
+func run(configPath string, noWatch bool) error {
+	// ── Config watcher ─────────────────────────────────────────
+	var watcher *config.Watcher
+	if !noWatch {
+		paths := config.ConfigPaths(configPath)
+		var err error
+		watcher, err = config.NewWatcher(paths)
+		if err != nil {
+			return err
+		}
+		defer watcher.Close()
 	}
 
-	log.Printf("simpllm starting")
-	log.Printf("  models: %v", cfg.ModelNames())
+	// ── OS signals ─────────────────────────────────────────────
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	// Create the handler.
-	srv := proxy.NewServer(cfg)
-
-	// Shared server config for all transports.
-	server := &http.Server{
-		Handler:           srv,
-		ReadHeaderTimeout: 10 * time.Second,
-		ReadTimeout:       5 * time.Minute, // long for streaming
-		WriteTimeout:      0,               // no timeout — streaming responses need it
-		IdleTimeout:       120 * time.Second,
-	}
-
+	hh := &hotHandler{}
+	var servers []*http.Server
 	var listeners []net.Listener
 	var unixPath string
 
-	// Start HTTP listener.
-	if cfg.Listen.HTTP != "" {
-		ln, err := net.Listen("tcp", cfg.Listen.HTTP)
+	reload := func() error {
+		// Load new config.
+		cfg, err := config.Load(configPath)
 		if err != nil {
-			log.Fatalf("http listen: %v", err)
+			log.Printf("ERROR config reload failed: %v — keeping current config", err)
+			return nil
 		}
-		listeners = append(listeners, ln)
-		go func() {
-			log.Printf("  http: listening on %s", cfg.Listen.HTTP)
-			if err := server.Serve(ln); err != nil && err != http.ErrServerClosed {
-				log.Printf("http server error: %v", err)
+
+		log.Printf("config loaded: models=%v", cfg.ModelNames())
+
+		// Create new handler and swap it in.
+		hh.Swap(proxy.NewServer(cfg))
+
+		// Only create listeners on first call.
+		if len(listeners) == 0 {
+			// Try systemd socket-activated listeners first.
+			listeners = activation.Listeners()
+			if len(listeners) > 0 {
+				log.Printf("socket activation: inherited %d listener(s) from systemd", len(listeners))
+			} else {
+				// Manual binding — create listeners from config.
+				if cfg.Listen.HTTP != "" {
+					ln, err := net.Listen("tcp", cfg.Listen.HTTP)
+					if err != nil {
+						log.Printf("ERROR http listen %s: %v", cfg.Listen.HTTP, err)
+					} else {
+						listeners = append(listeners, ln)
+						log.Printf("  http: listening on %s", cfg.Listen.HTTP)
+					}
+				}
+
+				if cfg.Listen.Unix != "" {
+					os.Remove(cfg.Listen.Unix)
+					ln, err := net.Listen("unix", cfg.Listen.Unix)
+					if err != nil {
+						log.Printf("ERROR unix listen %s: %v", cfg.Listen.Unix, err)
+					} else {
+						listeners = append(listeners, ln)
+						unixPath = cfg.Listen.Unix
+						log.Printf("  unix: listening on %s", cfg.Listen.Unix)
+					}
+				}
 			}
-		}()
-	}
 
-	// Start Unix socket listener.
-	if cfg.Listen.Unix != "" {
-		// Remove stale socket from a previous run.
-		os.Remove(cfg.Listen.Unix)
-
-		ln, err := net.Listen("unix", cfg.Listen.Unix)
-		if err != nil {
-			log.Fatalf("unix listen: %v", err)
+			// Start serving on each listener. The hotHandler is shared
+			// so new requests always use the latest config.
+			for _, ln := range listeners {
+				srv := &http.Server{
+					Handler:           hh,
+					ReadHeaderTimeout: 10 * time.Second,
+					ReadTimeout:       5 * time.Minute,
+					WriteTimeout:      0, // no timeout for streaming
+					IdleTimeout:       120 * time.Second,
+				}
+				servers = append(servers, srv)
+				go func(addr string) {
+					if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
+						log.Printf("server error (%s): %v", addr, err)
+					}
+				}(ln.Addr().String())
+			}
 		}
-		unixPath = cfg.Listen.Unix
-		listeners = append(listeners, ln)
-		go func() {
-			log.Printf("  unix: listening on %s", cfg.Listen.Unix)
-			if err := server.Serve(ln); err != nil && err != http.ErrServerClosed {
-				log.Printf("unix server error: %v", err)
+
+		log.Printf("simpllm ready")
+		return nil
+	}
+
+	// ── Initial start ──────────────────────────────────────────
+	if err := reload(); err != nil {
+		return err
+	}
+
+	// ── Wait loop ──────────────────────────────────────────────
+	if watcher != nil {
+		for {
+			select {
+			case <-watcher.Changes():
+				if err := reload(); err != nil {
+					return err
+				}
+			case sig := <-sigs:
+				return shutdown(servers, unixPath, sig)
 			}
-		}()
+		}
 	}
 
-	if len(listeners) == 0 {
-		log.Fatal("no listeners configured — set listen.http or listen.unix")
-	}
+	// No watcher — just wait for OS signal.
+	sig := <-sigs
+	return shutdown(servers, unixPath, sig)
+}
 
-	// Wait for interrupt signal.
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	sig := <-quit
+func shutdown(servers []*http.Server, unixPath string, sig os.Signal) error {
 	log.Printf("received %s, shutting down...", sig)
 
-	// Graceful shutdown: wait up to 10s for in-flight requests to complete.
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("shutdown error: %v", err)
+	for _, srv := range servers {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("shutdown error: %v", err)
+		}
 	}
 
-	// Clean up unix socket.
 	if unixPath != "" {
 		os.Remove(unixPath)
 	}
 
 	log.Printf("goodbye")
+	return nil
 }

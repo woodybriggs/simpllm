@@ -1,0 +1,10 @@
+[Unit]
+Description=simpllm Unix socket
+
+[Socket]
+ListenStream=/tmp/simpllm.sock
+SocketMode=0660
+Service=simpllm.service
+
+[Install]
+WantedBy=sockets.target

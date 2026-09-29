@@ -50,8 +50,29 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/v1/models", s.handleModels)
 }
 
+// statusRecorder wraps http.ResponseWriter to capture the status code.
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (sr *statusRecorder) WriteHeader(code int) {
+	sr.status = code
+	sr.ResponseWriter.WriteHeader(code)
+}
+
+func (sr *statusRecorder) Flush() {
+	if f, ok := sr.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.mux.ServeHTTP(w, r)
+	rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+	s.mux.ServeHTTP(rec, r)
+	if rec.status >= 400 {
+		log.Printf("ERROR %s %s -> %d", r.Method, r.URL.Path, rec.status)
+	}
 }
 
 func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
@@ -237,12 +258,14 @@ func (s *Server) proxy(w http.ResponseWriter, r *http.Request, body []byte, mode
 
 	resp, err := s.client.Do(ureq)
 	if err != nil {
+		log.Printf("upstream error %s: %v", uurl, err)
 		s.error(w, http.StatusBadGateway, fmt.Sprintf("upstream error: %v", err))
 		return
 	}
 
 	respBody, err := formats.TranslateResponse(resp.Body, ufmt, downstreamFormat)
 	if err != nil {
+		log.Printf("response translation error %s: %v", uurl, err)
 		s.error(w, http.StatusBadGateway, fmt.Sprintf("response translation error: %v", err))
 		return
 	}
@@ -281,11 +304,13 @@ func (s *Server) proxyStream(w http.ResponseWriter, r *http.Request, ureq *upstr
 	body, statusCode, err := s.client.DoStreamRaw(ureq)
 	if err != nil {
 		if ue, ok := err.(*upstream.UpstreamError); ok {
+			log.Printf("upstream error %s: %s", ureq.UpstreamURL, ue.Body)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(ue.StatusCode)
 			w.Write(ue.Body)
 			return
 		}
+		log.Printf("upstream stream error %s: %v", ureq.UpstreamURL, err)
 		s.error(w, http.StatusBadGateway, fmt.Sprintf("upstream stream error: %v", err))
 		return
 	}
@@ -323,6 +348,8 @@ func (s *Server) translateStream(body io.Reader, w http.ResponseWriter, flusher 
 			event, err = formats.ParseOpenAIStreamChunk(data)
 		case formats.WireAnthropicMessages:
 			event, err = formats.ParseAnthropicStreamEvent(eventType, data)
+		case formats.WireGeminiGenerateContent:
+			event, err = formats.ParseGeminiStreamEvent(data)
 		default:
 			if eventType != "" {
 				fmt.Fprintf(w, "event: %s\n", eventType)
@@ -353,6 +380,8 @@ func (s *Server) translateStream(body io.Reader, w http.ResponseWriter, flusher 
 			output = formats.FormatOpenAIStreamEvent(event)
 		case formats.WireAnthropicMessages:
 			output = formats.FormatAnthropicStreamEvent(event)
+		case formats.WireGeminiGenerateContent:
+			output = formats.FormatGeminiStreamEvent(event)
 		default:
 			continue
 		}
@@ -419,6 +448,7 @@ func (s *Server) proxyPassthrough(w http.ResponseWriter, r *http.Request, body [
 
 	resp, err := s.client.Do(ureq)
 	if err != nil {
+		log.Printf("upstream error %s: %v", uurl, err)
 		s.error(w, http.StatusBadGateway, fmt.Sprintf("upstream error: %v", err))
 		return
 	}

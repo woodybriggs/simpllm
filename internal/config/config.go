@@ -116,13 +116,14 @@ func parseConfigBytes(data []byte) (*Config, error) {
 		return nil, fmt.Errorf("pre-parse: %w", err)
 	}
 
-	// Step 2: Walk and resolve any $ref secret references.
-	resolved, err := secret.ResolveConfigMap(raw)
+	// Step 2: Resolve all $ref entries. Secrets are fetched from keyring
+	// and injected into the map, then all refs are resolved by map lookup.
+	resolved, err := secret.ResolveAllRefs(raw)
 	if err != nil {
-		return nil, fmt.Errorf("resolving secrets: %w", err)
+		return nil, fmt.Errorf("resolving refs: %w", err)
 	}
 	if resolved > 0 {
-		log.Printf("config: resolved %d secret ref(s)", resolved)
+		log.Printf("config: resolved %d ref(s)", resolved)
 	}
 
 	// Step 3: Re-marshal and unmarshal into Config struct.
@@ -215,6 +216,16 @@ func defaultConfig() *Config {
 			HTTP: ":8080",
 		},
 	}
+}
+
+// ConfigPaths returns the resolved config file paths for the given explicit path.
+// If explicitPath is set, returns just that path. Otherwise returns the global
+// and local config paths.
+func ConfigPaths(explicitPath string) []string {
+	if explicitPath != "" {
+		return []string{explicitPath}
+	}
+	return []string{homeConfigPath(), localConfigPath()}
 }
 
 func homeConfigPath() string {

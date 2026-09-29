@@ -1,0 +1,9 @@
+[Unit]
+Description=simpllm TCP socket
+
+[Socket]
+ListenStream=9729
+Service=simpllm.service
+
+[Install]
+WantedBy=sockets.target

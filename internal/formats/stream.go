@@ -403,6 +403,109 @@ func FormatAnthropicStreamEvent(ev *StreamEvent) string {
 	return sb.String()
 }
 
+// ─── Gemini streaming ─────────────────────────────────────────────────────────
+
+// geminiStreamChunk represents a single streaming chunk from Gemini.
+type geminiStreamChunk struct {
+	Candidates    []geminiCandidate    `json:"candidates"`
+	UsageMetadata *geminiUsageMetadata `json:"usageMetadata,omitempty"`
+	ModelVersion  string               `json:"modelVersion,omitempty"`
+}
+
+// ParseGeminiStreamEvent parses a Gemini SSE data line into a canonical StreamEvent.
+func ParseGeminiStreamEvent(data json.RawMessage) (*StreamEvent, error) {
+	var chunk geminiStreamChunk
+	if err := json.Unmarshal(data, &chunk); err != nil {
+		return nil, err
+	}
+
+	event := &StreamEvent{
+		Model: chunk.ModelVersion,
+	}
+
+	for _, c := range chunk.Candidates {
+		if c.Content != nil {
+			for _, p := range c.Content.Parts {
+				switch {
+				case p.Text != "":
+					event.Type = StreamEventTextDelta
+					event.Text = p.Text
+				case p.FunctionCall != nil:
+					event.Type = StreamEventToolUseStart
+					event.ToolName = p.FunctionCall.Name
+					args, _ := json.Marshal(p.FunctionCall.Args)
+					event.InputJSON = string(args)
+				}
+			}
+		}
+
+		if c.FinishReason != "" {
+			event.Type = StreamEventMessageStop
+			switch c.FinishReason {
+			case "STOP":
+				event.StopReason = StopReasonEndTurn
+			case "MAX_TOKENS":
+				event.StopReason = StopReasonMaxTokens
+			default:
+				event.StopReason = StopReason(c.FinishReason)
+			}
+		}
+	}
+
+	if chunk.UsageMetadata != nil {
+		event.Usage = &Usage{
+			InputTokens:  chunk.UsageMetadata.PromptTokenCount,
+			OutputTokens: chunk.UsageMetadata.CandidatesTokenCount,
+			TotalTokens:  chunk.UsageMetadata.TotalTokenCount,
+		}
+	}
+
+	return event, nil
+}
+
+// FormatGeminiStreamEvent converts a canonical StreamEvent to Gemini SSE format.
+func FormatGeminiStreamEvent(ev *StreamEvent) string {
+	var sb strings.Builder
+
+	chunk := geminiStreamChunk{
+		Candidates: []geminiCandidate{{
+			Index: 0,
+			Content: &geminiContent{
+				Role: "model",
+			},
+		}},
+	}
+
+	switch ev.Type {
+	case StreamEventTextDelta:
+		chunk.Candidates[0].Content.Parts = []geminiPart{{Text: ev.Text}}
+
+	case StreamEventToolUseStart:
+		chunk.Candidates[0].Content.Parts = []geminiPart{{
+			FunctionCall: &geminiFunctionCall{
+				Name: ev.ToolName,
+			},
+		}}
+
+	case StreamEventMessageStop:
+		switch ev.StopReason {
+		case StopReasonEndTurn:
+			chunk.Candidates[0].FinishReason = "STOP"
+		case StopReasonMaxTokens:
+			chunk.Candidates[0].FinishReason = "MAX_TOKENS"
+		default:
+			chunk.Candidates[0].FinishReason = string(ev.StopReason)
+		}
+
+	default:
+		return ""
+	}
+
+	data, _ := json.Marshal(chunk)
+	fmt.Fprintf(&sb, "data: %s\n\n", data)
+	return sb.String()
+}
+
 // ─── Stream translators ──────────────────────────────────────────────────────
 
 // StreamTranslator reads SSE events from an upstream, translates them to the
@@ -444,6 +547,8 @@ func (st *StreamTranslator) Run() error {
 			canonical, err = ParseOpenAIStreamChunk(data)
 		case WireAnthropicMessages:
 			canonical, err = ParseAnthropicStreamEvent(eventType, data)
+		case WireGeminiGenerateContent:
+			canonical, err = ParseGeminiStreamEvent(data)
 		default:
 			fmt.Fprintf(st.writer, "event: %s\ndata: %s\n\n", eventType, data)
 			if st.flusher != nil {
@@ -468,6 +573,8 @@ func (st *StreamTranslator) Run() error {
 			output = FormatOpenAIStreamEvent(canonical)
 		case WireAnthropicMessages:
 			output = FormatAnthropicStreamEvent(canonical)
+		case WireGeminiGenerateContent:
+			output = FormatGeminiStreamEvent(canonical)
 		default:
 			continue
 		}

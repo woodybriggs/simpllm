@@ -23,6 +23,7 @@ const (
 	WireOpenAIChatCompletions WireFormat = "openai/chat/completions"
 	WireAnthropicMessages     WireFormat = "anthropic/messages"
 	WireOpenAIResponses       WireFormat = "openai/responses"
+	WireGeminiGenerateContent WireFormat = "gemini/generateContent"
 )
 
 // TranslateRequest converts an incoming request body from sourceFormat to targetFormat.
@@ -68,6 +69,8 @@ func ParseToCanonical(body []byte, format WireFormat) (*ChatRequest, error) {
 		return ParseAnthropic(body)
 	case WireOpenAIResponses:
 		return ParseResponses(body)
+	case WireGeminiGenerateContent:
+		return ParseGemini(body)
 	default:
 		return nil, &FormatError{Format: string(format), Message: "unsupported wire format"}
 	}
@@ -82,6 +85,8 @@ func FormatFromCanonical(req *ChatRequest, format WireFormat) ([]byte, error) {
 		return FormatAnthropicRequest(req), nil
 	case WireOpenAIResponses:
 		return FormatResponsesRequest(req), nil
+	case WireGeminiGenerateContent:
+		return FormatGeminiRequest(req), nil
 	default:
 		return nil, &FormatError{Format: string(format), Message: "unsupported wire format"}
 	}
@@ -98,6 +103,8 @@ func ParseResponseToCanonical(body []byte, format WireFormat) (*ChatResponse, er
 		return parseAnthropicResponse(body)
 	case WireOpenAIResponses:
 		return parseResponsesResponse(body)
+	case WireGeminiGenerateContent:
+		return parseGeminiResponse(body)
 	default:
 		return nil, &FormatError{Format: string(format), Message: "unsupported wire format"}
 	}
@@ -112,6 +119,8 @@ func FormatResponseFromCanonical(resp *ChatResponse, format WireFormat) ([]byte,
 		return FormatAnthropic(resp), nil
 	case WireOpenAIResponses:
 		return FormatResponses(resp), nil
+	case WireGeminiGenerateContent:
+		return FormatGemini(resp), nil
 	default:
 		return nil, &FormatError{Format: string(format), Message: "unsupported wire format"}
 	}

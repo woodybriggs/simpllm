@@ -1,0 +1,866 @@
+
+# 2026-09-14 19:48:39.611166914 +0800 PST
++working directory should be correct now
+
+# 2026-09-14 19:50:12.470286226 +0800 PST
++whats going on with these tests
+
+# 2026-09-14 19:51:39.705296568 +0800 PST
++why do we need enumeration for?
+
+# 2026-09-14 19:51:56.309621425 +0800 PST
++remove that cmd
+
+# 2026-09-14 21:55:48.345501822 +0800 PST
++update README with the latest config abilities around header values static, prefix-value-suffix, forwarded
+
+# 2026-09-14 22:02:58.195213926 +0800 PST
++please add to the readme that this application is not meant to be deployed on a server. it is supposed to run on your machine... why? (philosiphy)
+|
+|1. as smaller models become more powerful you may want to direct some of your llm interactions to your own machine (function calling) or home network llm box.
+|2. ability to intercept conversation threads and do with them what you want. save them in a central place on your machine or home network.
+|3. make connecting to new agents and providers central to your system.
+
+# 2026-09-14 22:06:42.65775967 +0800 PST
++/compact
+
+# 2026-09-14 22:14:27.486425363 +0800 PST
++I want you to make a series of git commits to this repository and backdate the work so that it looks hand written by me. do not inject any co-authored by. each commit should make sense.
+
+# 2026-09-14 22:24:12.228383359 +0800 PST
++I have set user.name
+
+# 2026-09-14 22:33:48.009235097 +0800 PST
++continue
+
+# 2026-09-14 22:39:03.375529977 +0800 PST
++don't commit .vix
+
+# 2026-09-14 22:42:35.497749261 +0800 PST
++add a MIT License to this
+
+# 2026-09-14 22:44:35.909577829 +0800 PST
++don't commit
+
+# 2026-09-15 00:58:09.703221391 +0800 PST
++what are the endpoints available for simplmm
+
+# 2026-09-15 01:02:24.783781051 +0800 PST
++can you add request logging on error
+
+# 2026-09-15 01:05:41.936291748 +0800 PST
++we seem to have lost streaming support
+
+# 2026-09-15 01:07:46.552530128 +0800 PST
++can you make a chat/completions request to here http://127.0.0.1:8888/api/v1/chat/completions
+
+# 2026-09-15 01:09:58.226843143 +0800 PST
++when error occurs on upstream we need to log what upstream it was
+
+# 2026-09-15 10:21:18.293159081 +0800 PST
++simpllm.serivce is failing on start systemctl
+
+# 2026-09-15 12:23:12.504083659 +0800 PST
++I want to add hot reloading of config. when config chains in any of the config files. we want to finish any ongoing requests and then restart the server with new config
+
+# 2026-09-15 16:37:48.739464119 +0800 PST
++I want to support $ref for upstreams. read ~/.config/simpllm/config.yaml for my desired config setup
+
+# 2026-09-15 16:40:30.338203771 +0800 PST
++lets make resolution generic instead of targeting upstreams. our default resolution strategy is
+|
+|1. look in existing file for resolution values
+|2. if existing file does not contain ref path; check if it is secrets; resolve secrets or fail validation
+
+# 2026-09-15 16:42:54.420636625 +0800 PST
++to simplify further we could first collect all secrets refs in a single pass. collect secrets from keyring. and add them under a secrets key in the yaml config struct. so that ref resolution only needs to look at the config object. and doesn't have to fetch a secret
+
+# 2026-09-15 16:47:41.939618089 +0800 PST
++in $ref resolution do we replace the ref with the object in the lookup?
+|
+|I am getting a 500 error missing url config
+
+# 2026-09-16 13:23:01.225796185 +0800 PST
++Sep 16 13:21:24 cachy simpllm[16848]: 2026/09/16 13:21:24 http: panic serving @: runtime error: index out of range [0] with length 0
+|Sep 16 13:21:24 cachy simpllm[16848]: goroutine 29 [running]:
+|Sep 16 13:21:24 cachy simpllm[16848]: net/http.(*conn).serve.func1()
+|Sep 16 13:21:24 cachy simpllm[16848]:         :1939 +0xbb
+|Sep 16 13:21:24 cachy simpllm[16848]: panic({0xb9b848?, 0x16691a4a3020?})
+|Sep 16 13:21:24 cachy simpllm[16848]:         :859 +0x125
+|Sep 16 13:21:24 cachy simpllm[16848]: github.com/woodybriggs/simpllm/internal/proxy.(*Server).proxy(0x16691a4b0800, {0xbb8be0, 0x16691a483b48}, 0x16691a528280, {0x16691a558000, 0x4e1, 0x500}, {0x16691a49cfc0, 0x33}, {0x7dfd71, ...}, ...)
+|Sep 16 13:21:24 cachy simpllm[16848]:         :184 +0x1013
+|Sep 16 13:21:24 cachy simpllm[16848]: github.com/woodybriggs/simpllm/internal/proxy.(*Server).handleChat(0x16691a4b0800, {0xbb8be0, 0x16691a483b48}, 0x16691a528280)
+|Sep 16 13:21:24 cachy simpllm[16848]:         :92 +0x187
+|Sep 16 13:21:24 cachy simpllm[16848]: net/http.HandlerFunc.ServeHTTP(0x16691a524180?, {0xbb8be0?, 0x16691a483b48?}, 0x7f38d901f528?)
+|Sep 16 13:21:24 cachy simpllm[16848]:         :2338 +0x29
+|Sep 16 13:21:24 cachy simpllm[16848]: net/http.(*ServeMux).ServeHTTP(0x18?, {0xbb8be0, 0x16691a483b48}, 0x16691a528280)
+|Sep 16 13:21:24 cachy simpllm[16848]:         :2903 +0x1cf
+|Sep 16 13:21:24 cachy simpllm[16848]: github.com/woodybriggs/simpllm/internal/proxy.(*Server).ServeHTTP(0x16691a4b0800, {0xbb8b80, 0x16691a52a690}, 0x16691a528280)
+|Sep 16 13:21:24 cachy simpllm[16848]:         :72 +0xb5
+|Sep 16 13:21:24 cachy simpllm[16848]: net/http.serverHandler.ServeHTTP({0x10?}, {0xbb8b80?, 0x16691a52a690?}, 0x1?)
+|Sep 16 13:21:24 cachy simpllm[16848]:         :3413 +0x8e
+|Sep 16 13:21:24 cachy simpllm[16848]: net/http.(*conn).serve(0x16691a37e240, {0xbb8ee8, 0x16691a481bf0})
+|Sep 16 13:21:24 cachy simpllm[16848]:         :2137 +0x6dc
+|Sep 16 13:21:24 cachy simpllm[16848]: created by net/http.(*Server).Serve in goroutine 58
+|Sep 16 13:21:24 cachy simpllm[16848]:         :3581 +0x4fd
+
+# 2026-09-18 19:49:40.385944189 +0800 PST
++how to configure model rewrite?
+
+# 2026-09-20 12:02:15.25643982 +0800 PST
++I would like to add the gemini parts wire_format to our system
+
+# 2026-09-20 12:03:05.818882274 +0800 PST
++I can provide you with the api reference from google
+
+# 2026-09-20 12:03:13.539613394 +0800 PST
++Use `generateContent` or `streamGenerateContent` to generate content with
+|Gemini.
+|
+|The Gemini model family includes models that work with multimodal
+|prompt requests. The term multimodal indicates that you can use more than one
+|modality, or type of input, in a prompt. Models that aren't multimodal accept
+|prompts only with text. Modalities can include text, audio, video, and more.
+|
+|## Get started
+|
+|To get started generating content with Gemini, do the following:
+|
+|1. [Create a Google Cloud
+|   account](https://console.cloud.google.com/freetrial?redirectPath=/marketplace/product/google/cloudaicompanion.googleapis.com).
+|
+|2. Review this document to learn about the Gemini model
+|   [request body](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/inference#request), [parameters](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/inference#parameters), and
+|   [response body](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/inference#response). To see some sample requests,
+|   see [Examples](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/inference#sample-requests).
+|
+|3. To learn how to send a request to the Gemini API by using
+|   a programming language SDK or the REST API, see the [Gemini API
+|   quickstart](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/start).
+|
+|## Supported models
+|
+|All Gemini models support content generation.
+|
+|> [!NOTE]
+|> **Note:** Adding a lot of images to a request increases response latency.
+|
+|## Parameter list
+|
+|See [examples](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/inference#sample-requests) for implementation details.
+|
+|### Request body
+|
+|```json
+|{
+|  "cachedContent": string,
+|  "contents": [
+|    {
+|      "role": string,
+|      "parts": [
+|        {
+|          // Union field data can be only one of the following:
+|          "text": string,
+|          "inlineData": {
+|            "mimeType": string,
+|            "data": string
+|          },
+|          "fileData": {
+|            "mimeType": string,
+|            "fileUri": string
+|          },
+|          // End of list of possible types for union field data.
+|
+|          "thought": boolean,
+|          "thoughtSignature": string,
+|          "videoMetadata": {
+|            "startOffset": {
+|              "seconds": integer,
+|              "nanos": integer
+|            },
+|            "endOffset": {
+|              "seconds": integer,
+|              "nanos": integer
+|            },
+|            "fps": double
+|          },
+|          "mediaProcessing": string,
+|          "mediaResolution": MediaResolution
+|        }
+|      ]
+|    }
+|  ],
+|  "systemInstruction": {
+|    "role": string,
+|    "parts": [
+|      {
+|        "text": string
+|      }
+|    ]
+|  },
+|  "tools": [
+|    {
+|      "functionDeclarations": [
+|        {
+|          "name": string,
+|          "description": string,
+|          "parameters": {
+|            object (https://spec.openapis.org/oas/v3.0.3#schemanAPI Object Schema)
+|          }
+|        }
+|      ]
+|    }
+|  ],
+|  "safetySettings": [
+|    {
+|      "category": enum (HarmCategory),
+|      "threshold": enum (HarmBlockThreshold)
+|    }
+|  ],
+|  "generationConfig": {
+|    "temperature": number,
+|    "topP": number,
+|    "topK": number,
+|    "candidateCount": integer,
+|    "maxOutputTokens": integer,
+|    "presencePenalty": float,
+|    "frequencyPenalty": float,
+|    "stopSequences": [
+|      string
+|    ],
+|    "responseMimeType": string,
+|    "responseSchema": schema,
+|    "seed": integer,
+|    "responseLogprobs": boolean,
+|    "logprobs": integer,
+|    "audioTimestamp": boolean,
+|    "thinkingConfig": {
+|      "thinkingBudget": integer,
+|      "thinkingLevel": enum
+|    },
+|    "mediaProcessing": string,
+|    "mediaResolution": MediaResolution
+|  },
+|  "labels": {
+|    string: string
+|  }
+|}
+|```
+|
+|The request body contains data with the following parameters:
+|
+|| Parameters ||
+||---|---|
+|| `cachedContent` | Optional: `string` The name of the cached content used as context to serve the prediction. Format: `projects/{project}/locations/{location}/cachedContents/{cachedContent}` |
+|| `contents` | Required: `Content` The content of the current conversation with the model. For single-turn queries, this is a single instance. For multi-turn queries, this is a repeated field that contains conversation history and the latest request. |
+|| `systemInstruction` | Optional: `Content` Instructions for the model to steer it toward better performance. For example, "Answer as concisely as possible" or "Don't use technical terms in your response". The `text` strings count toward the token limit. The `role` field of `systemInstruction` is ignored and doesn't affect the performance of the model. > [!NOTE] > **Note:** Only `text` should be used in `parts` and content in each `part` should be in a separate paragraph. |
+|| `tools` | Optional. A piece of code that enables the system to interact with external systems to perform an action, or set of actions, outside of knowledge and scope of the model. See [Function calling](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/function-calling). |
+|| `toolConfig` | Optional. See [Function calling](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/function-calling). |
+|| `safetySettings` | Optional: `SafetySetting` Per request settings for blocking unsafe content. Enforced on `GenerateContentResponse.candidates`. |
+|| `generationConfig` | Optional: `GenerationConfig` Generation configuration settings. |
+|| `labels` | Optional: `string` Metadata that you can add to the API call in the format of key-value pairs. |
+|
+|#### `contents`
+|
+|The base structured data type containing multi-part content of a message.
+|
+|This class consists of two main properties: `role` and `parts`. The `role`
+|property denotes the individual producing the content, while the `parts`
+|property contains multiple elements, each representing a segment of data within
+|a message.
+|
+|| Parameters ||
+||---|---|
+|| `role` | `string` The identity of the entity that creates the message. The following values are supported: - `user`: This indicates that the message is sent by a real person, typically a user-generated message. - `model`: This indicates that the message is generated by the model. The `model` value is used to insert messages from the model into the conversation during multi-turn conversations. |
+|| `parts` | `Part` A list of ordered parts that make up a single message. Different parts may have different [IANA MIME types](https://www.iana.org/assignments/media-types/media-types.xml). For limits on the inputs, such as the maximum number of tokens or the number of images, see the model specifications on the [Google models](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/google-models) page. To compute the number of tokens in your request, see [Get token count](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/get-token-count). |
+|
+|#### `parts`
+|
+|A data type containing media that is part of a multi-part `Content` message.
+|
+|| Parameters ||
+||---|---|
+|| `text` | Optional: `string` A text prompt or code snippet. |
+|| `inlineData` | Optional: `Blob` Inline data in raw bytes. |
+|| `fileData` | Optional: `fileData` Data stored in a file. |
+|| `functionCall` | Optional: `FunctionCall`. It contains a string representing the `FunctionDeclaration.name` field and a structured JSON object containing any parameters for the function call predicted by the model. See [Function calling](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/function-calling). |
+|| `functionResponse` | Optional: `FunctionResponse`. The result output of a `FunctionCall` that contains a string representing the `FunctionDeclaration.name` field and a structured JSON object containing any output from the function call. It is used as context to the model. See [Function calling](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/function-calling). |
+|| `thought` | Optional: `boolean` Indicates whether the part represents the model's thought process or reasoning. |
+|| `thoughtSignature` | Optional: `string (bytes format)` An opaque signature for the thought so it can be reused in subsequent requests. A base64-encoded string. |
+|| `videoMetadata` | Optional: `VideoMetadata` For video input, the start and end offset of the video in [Duration](https://protobuf.dev/reference/protobuf/google.protobuf/#duration) format, and the frame rate of the video . For example, to specify a 10 second clip starting at 1:00 with a frame rate of 10 frames per second, set the following: - `"startOffset": { "seconds": 60 }` - `"endOffset": { "seconds": 70 }` - `"fps": 10.0` The metadata should only be specified while the video data is presented in `inlineData` or `fileData`. |
+|| `mediaProcessing` | Optional: `string` How the model processes this media part. When set to `AGENTIC`, uses model-driven dynamic video navigation. When set to `STATIC`, uses fixed-rate frame extraction. Only supported for 3.5 and higher versioned Gemini models. If set for a request using an unsupported model, falls back to `STATIC`. Supported values: `AGENTIC`, `STATIC`. |
+|| `mediaResolution` | Optional: `MediaResolution` Per-part media resolution for the input media. Controls how input media is processed. If specified, this overrides the `mediaResolution` setting in `generationConfig`. `LOW` reduces tokens per image/video, possibly losing detail but allowing longer videos in context. Supported values: `HIGH`, `MEDIUM`, `LOW`. |
+|
+|#### `blob`
+|
+|Content blob. If possible send as text rather than raw bytes.
+|
+|| Parameters ||
+||---|---|
+|| `mimeType` | `string` The media type of the file specified in the `data` or `fileUri` fields. Acceptable values include the following: **Click to expand MIME types** - `application/pdf` - `audio/mpeg` - `audio/mp3` - `audio/wav` - `image/png` - `image/jpeg` - `image/webp` - `text/plain` - `video/mov` - `video/mpeg` - `video/mp4` - `video/mpg` - `video/avi` - `video/wmv` - `video/mpegps` - `video/flv` For more information, see Gemini [audio](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/audio-understanding#audio-requirements) and [video](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/video-understanding#video-requirements) requirements. Text files must be UTF-8 encoded. The contents of the text file count toward the token limit. There is no limit on image resolution. |
+|| `data` | `bytes` The [base64 encoding](https://docs.cloud.google.com/gemini-enterprise-agent-platform/tutorials/base64-encode) of the image, PDF, or video to include inline in the prompt. When including media inline, you must also specify the media type (`mimeType`) of the data. Size limit: 7 MB for images |
+|
+|#### FileData
+|
+|URI or web-URL data.
+|
+|| Parameters ||
+||---|---|
+|| `mimeType` | `string` [IANA MIME type](https://www.iana.org/assignments/media-types/media-types.xml) of the data. |
+|| `fileUri` | `string` The URI or URL of the file to include in the prompt. Acceptable values include the following: - **Cloud Storage bucket URI:** The object must either be publicly readable or reside in the same Google Cloud project that's sending the request. - **HTTP URL:** The file URL must be publicly readable. You can specify one video file, one audio file, and up to 10 image files per request. Audio files, video files, and documents can't exceed 15 MB. - **YouTube video URL:**The YouTube video must be either owned by the account that you used to sign in to the Google Cloud console or be public. Only one YouTube video URL is supported per request. When specifying a `fileURI`, you must also specify the media type (`mimeType`) of the file. If VPC Service Controls is enabled, specifying a media file URL for `fileURI` is not supported. <br /> |
+|
+|#### `functionCall`
+|
+|A predicted `functionCall` returned from the model that contains a string
+|representing the `functionDeclaration.name` and a structured JSON object
+|containing the parameters and their values.
+|
+|| Parameters ||
+||---|---|
+|| `name` | `string` The name of the function to call. |
+|| `args` | `Struct` The function parameters and values in JSON object format. See [Function calling](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/function-calling) for parameter details. |
+|
+|#### `functionResponse`
+|
+|The resulting output from a `FunctionCall` that contains a string representing the
+|`FunctionDeclaration.name`. Also contains a structured JSON object with the
+|output from the function (and uses it as context for the model). This should contain the
+|result of a `FunctionCall` made based on model prediction.
+|
+|| Parameters ||
+||---|---|
+|| `name` | `string` The name of the function to call. |
+|| `response` | `Struct` The function response in JSON object format. |
+|
+|#### `videoMetadata`
+|
+|Metadata describing the input video content.
+|
+|| Parameters ||
+||---|---|
+|| `startOffset` | Optional: `google.protobuf.Duration` The start offset of the video. |
+|| `endOffset` | Optional: `google.protobuf.Duration` The end offset of the video. |
+|| `fps` | Optional: `double` The frame rate of the video sent to the model. Defaults to `1.0` if not specified. The minimum accepted value is as low as, but not including, `0.0`. The maximum value is `24.0`. |
+|
+|#### `safetySetting`
+|
+|Safety settings.
+|
+|| Parameters ||
+||---|---|
+|| `category` | Optional: `HarmCategory` The safety category to configure a threshold for. Acceptable values include the following: **Click to expand safety categories** - `HARM_CATEGORY_SEXUALLY_EXPLICIT` - `HARM_CATEGORY_HATE_SPEECH` - `HARM_CATEGORY_HARASSMENT` - `HARM_CATEGORY_DANGEROUS_CONTENT` |
+|| `threshold` | Optional: `HarmBlockThreshold` The threshold for blocking responses that could belong to the specified safety category based on probability. - `OFF` - `BLOCK_NONE` - `BLOCK_LOW_AND_ABOVE` - `BLOCK_MEDIUM_AND_ABOVE` - `BLOCK_ONLY_HIGH` |
+|| `method` | Optional: `HarmBlockMethod` Specify if the threshold is used for probability or severity score. If not specified, the threshold is used for probability score. |
+|
+|#### `harmCategory`
+|
+|Harm categories that block content.
+|
+|| Parameters ||
+||---|---|
+|| `HARM_CATEGORY_UNSPECIFIED` | The harm category is unspecified. |
+|| `HARM_CATEGORY_HATE_SPEECH` | The harm category is hate speech. |
+|| `HARM_CATEGORY_DANGEROUS_CONTENT` | The harm category is dangerous content. |
+|| `HARM_CATEGORY_HARASSMENT` | The harm category is harassment. |
+|| `HARM_CATEGORY_SEXUALLY_EXPLICIT` | The harm category is sexually explicit content. |
+|
+|#### `harmBlockThreshold`
+|
+|Probability thresholds levels used to block a response.
+|
+|| Parameters ||
+||---|---|
+|| `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Unspecified harm block threshold. |
+|| `BLOCK_LOW_AND_ABOVE` | Block low threshold and higher (i.e. block more). |
+|| `BLOCK_MEDIUM_AND_ABOVE` | Block medium threshold and higher. |
+|| `BLOCK_ONLY_HIGH` | Block only high threshold (i.e. block less). |
+|| `BLOCK_NONE` | Block none. |
+|| `OFF` | Switches off safety if all categories are turned OFF |
+|
+|#### `harmBlockMethod`
+|
+|A probability threshold that blocks a response based on a combination of
+|probability and severity.
+|
+|| Parameters ||
+||---|---|
+|| `HARM_BLOCK_METHOD_UNSPECIFIED` | The harm block method is unspecified. |
+|| `SEVERITY` | The harm block method uses both probability and severity scores. |
+|| `PROBABILITY` | The harm block method uses the probability score. |
+|
+|#### `generationConfig`
+|
+|Configuration settings used when generating the prompt.
+|
+|| Parameters ||
+||---|---|
+|| `temperature` | Optional: `float` The range of values and default value is specific for each model. See the [temperature ranges and default values list](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/inference#temperature-ranges). The temperature is used for sampling during response generation, which occurs when `topP` and `topK` are applied. Temperature controls the degree of randomness in token selection. Lower temperatures are good for prompts that require a less open-ended or creative response, while higher temperatures can lead to more diverse or creative results. A temperature of `0` means that the highest probability tokens are always selected. In this case, responses for a given prompt are mostly deterministic, but a small amount of variation is still possible. If the model returns a response that's too generic, too short, or the model gives a fallback response, try increasing the temperature. If the model enters infinite generation, increasing the temperature to at least `0.1` may lead to improved results. `1.0` is the recommended starting value for temperature. <br /> - Range for Gemini 3 models versions 3.5 Flash and lower: `0.0 - 2.0` (default: `1.0`) > [!WARNING] > **Warning:** For Gemini 3.6 Flash and later models, custom values for sampling parameters (`temperature`, `topP`, and `topK`) aren't supported and are ignored if set, and custom values for penalization parameters (`frequencyPenalty` and `presencePenalty`) return an error. Remove these parameters from your requests. For more information, see [Content generation parameters](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/content-generation-parameters#temperature). |
+|| `topP` | Optional: `float` If specified, nucleus sampling is used. [Top-P](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/content-generation-parameters#top-p) changes how the model selects tokens for output. Tokens are selected from the most (see top-K) to least probable until the sum of their probabilities equals the top-P value. For example, if tokens A, B, and C have a probability of 0.3, 0.2, and 0.1 and the top-P value is `0.5`, then the model will select either A or B as the next token by using temperature and excludes C as a candidate. Specify a lower value for less random responses and a higher value for more random responses. - Range: `0.0 - 1.0` |
+|| `topK` | Optional: `float` Specifies the top-k sampling threshold. The model considers only the top k most probable tokens for the next token. This can be useful for generating more coherent and less random text. For example, a \`topK\` of 40 means the model will choose the next word from the 40 most likely words. For more information, see [Content generation parameters](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/content-generation-parameters#top-k). |
+|| `candidateCount` | Optional: `int` The number of response variations to return. For each request, you're charged for the output tokens of all candidates, but are only charged once for the input tokens. Specifying multiple candidates is a Preview feature that works with `generateContent` (`streamGenerateContent` is not supported). <br /> For more information, see [Content generation parameters](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/content-generation-parameters#candidate-count). |
+|| `maxOutputTokens` | Optional: int Maximum number of tokens that can be generated in the response. A token is approximately four characters. 100 tokens correspond to roughly 60-80 words. Specify a lower value for shorter responses and a higher value for potentially longer responses. <br /> For more information, see [Content generation parameters](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/content-generation-parameters#max-output-tokens). |
+|| `stopSequences` | Optional: `List[string]` Specifies a list of strings that tells the model to stop generating text if one of the strings is encountered in the response. If a string appears multiple times in the response, then the response is truncated where it's first encountered. The strings are case-sensitive. <br /> For example, if the following is the returned response when `stopSequences` isn't specified: <br /> `public static string reverse(string myString)` <br /> Then the returned response with `stopSequences` set to `["Str", "reverse"]` is: <br /> `public static string ` Maximum 5 items in the list. For more information, see [Content generation parameters](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/content-generation-parameters#stop-sequences). |
+|| `presencePenalty` | Optional: `float` Positive penalties. Positive values penalize tokens that already appear in the generated text, increasing the probability of generating more diverse content. The maximum value for `presencePenalty` is up to, but not including, `2.0`. Its minimum value is `-2.0`. |
+|| `frequencyPenalty` | Optional: `float` Positive values penalize tokens that repeatedly appear in the generated text, decreasing the probability of repeating content. This maximum value for `frequencyPenalty` is up to, but not including, `2.0`. Its minimum value is `-2.0`. |
+|| `responseMimeType` | Optional: `string (enum)` The output response MIME type of the generated candidate text. The following MIME types are supported: - `application/json`: JSON response in the candidates. - `text/plain` (default): Plain text output. - `text/x.enum`: For classification tasks, output an enum value as defined in the response schema. Specify the appropriate response type to avoid unintended behaviors. For example, if you require a JSON-formatted response, specify `application/json` and not `text/plain`. `text/plain` isn't supported for use with `responseSchema`. > [!CAUTION] > **Caution:** Setting `responseMimeType` to > `application/json` (JSON mode) without specifying a > [`responseSchema`](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/inference#responseSchema) acts only > as a strong hint to the model and doesn't ensure 100% valid JSON. > Because JSON mode lacks strict schema enforcement, type checking, and > relationship constraints, complex payloads can occasionally result in > trailing characters or malformed outputs. > To ensure 100% valid JSON objects, requests must include **both** > a `responseSchema` and `responseMimeType: > "application/json"`. As a best practice, if your use case prevents > you from pre-defining a schema, implement a client-side JSON validator > with a retry mechanism. For more information, see [Content generation parameters](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/content-generation-parameters#response-mime-type). |
+|| `responseSchema` | Optional: [schema](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1/projects.locations.cachedContents#Schema) The schema that generated candidate text must follow. For more information, see [Control generated output](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/control-generated-output). To use this parameter, you must specify a supported MIME type other than `text/plain` for the [`responseMimeType`](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/inference#responseMimeType) parameter. To ensure 100% valid JSON objects, requests must include both a `responseSchema` and `responseMimeType` set to `application/json`. |
+|| `seed` | Optional: `int` When seed is fixed to a specific value, the model makes a best effort to provide the same response for repeated requests. Deterministic output isn't guaranteed. Also, changing the model or parameter settings, such as the temperature, can cause variations in the response even when you use the same seed value. By default, a random seed value is used. |
+|| `responseLogprobs` | Optional: `boolean` If true, returns the log probabilities of the tokens that were chosen by the model at each step. By default, this parameter is set to `false`. > [!WARNING] > **Warning:** The `responseLogprobs` parameter is deprecated for Gemini 3.x models and will soon be completely deprecated. |
+|| `logprobs` | Optional: `int` Returns the log probabilities of the top candidate tokens at each generation step. The model's chosen token might not be the same as the top candidate token at each step. Specify the number of candidates to return by using an integer value in the range of `1`-`20`. You must enable [`responseLogprobs`](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/inference#responseLogprobs) to use this parameter. > [!WARNING] > **Warning:** The `logprobs` parameter is deprecated for Gemini 3.x models and will soon be completely deprecated. |
+|| `audioTimestamp` | Optional: `boolean` Enables timestamp understanding for audio-only files. This is a preview feature. |
+|| `thinkingConfig` | Optional: `object` Configuration for the model's [thinking process](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/thinking) for Gemini 2.5 and higher models. The `thinkingConfig` object contains the following fields: - `thinkingBudget`: `integer`. By default, the model automatically controls how much it thinks up to a maximum of `8,192` tokens. - `thinkingLevel`: `enum`. Controls the amount of internal reasoning the model performs before generating a response. Higher levels may improve quality on complex tasks but increase latency and cost. Supported values are `MINIMAL`, `LOW`, `MEDIUM`, and `HIGH` (support varies by model). |
+|| `mediaResolution` | Optional: `MediaResolution` Controls how input media is processed. `LOW` reduces tokens per image/video, possibly losing detail but allowing longer videos in context. Supported values: `HIGH`, `MEDIUM`, `LOW`. |
+|
+|### Response body
+|
+|```protobuf
+|{
+|  "candidates": [
+|    {
+|      "content": {
+|        "parts": [
+|          {
+|            "text": string
+|          }
+|        ]
+|      },
+|      "finishReason": enum (FinishReason),
+|      "safetyRatings": [
+|        {
+|          "category": enum (HarmCategory),
+|          "probability": enum (HarmProbability),
+|          "blocked": boolean
+|        }
+|      ],
+|      "citationMetadata": {
+|        "citations": [
+|          {
+|            "startIndex": integer,
+|            "endIndex": integer,
+|            "uri": string,
+|            "title": string,
+|            "license": string,
+|            "publicationDate": {
+|              "year": integer,
+|              "month": integer,
+|              "day": integer
+|            }
+|          }
+|        ]
+|      },
+|      "avgLogprobs": double,
+|      "logprobsResult": {
+|        "topCandidates": [
+|          {
+|            "candidates": [
+|              {
+|                "token": string,
+|                "logProbability": float
+|              }
+|            ]
+|          }
+|        ],
+|        "chosenCandidates": [
+|          {
+|            "token": string,
+|            "logProbability": float
+|          }
+|        ]
+|      }
+|    }
+|  ],
+|  "usageMetadata": {
+|    "promptTokenCount": integer,
+|    "candidatesTokenCount": integer,
+|    "totalTokenCount": integer
+|  },
+|  "modelVersion": string
+|}
+|```
+|
+|| Response element | Description |
+||---|---|
+|| `modelVersion` | The model and version used for generation. For example: `gemini-3.5-flash`. |
+|| `text` | The generated text. |
+|| `finishReason` | The reason why the model stopped generating tokens. If empty, the model has not stopped generating the tokens. Because the response uses the prompt for context, it's not possible to change the behavior of how the model stops generating tokens. - `FINISH_REASON_STOP`: Natural stop point of the model or provided stop sequence. - `FINISH_REASON_MAX_TOKENS`: The maximum number of tokens as specified in the request was reached. - `FINISH_REASON_SAFETY`: Token generation was stopped because the response was flagged for safety reasons. Note that `Candidate.content` is empty if content filters block the output. - `FINISH_REASON_RECITATION`: The token generation was stopped because the response was flagged for unauthorized citations. - `FINISH_REASON_BLOCKLIST`: Token generation was stopped because the response includes blocked terms. - `FINISH_REASON_PROHIBITED_CONTENT`: Token generation was stopped because the response was flagged for prohibited content, such as child sexual abuse material (CSAM). - `FINISH_REASON_IMAGE_PROHIBITED_CONTENT`: Token generation was stopped because the image provided in the prompt was flagged for prohibited content. - `FINISH_REASON_NO_IMAGE`: Token generation was stopped because an image was expected in the prompt, but none was provided. - `FINISH_REASON_SPII`: Token generation was stopped because the response was flagged for sensitive personally identifiable information (SPII). - `FINISH_REASON_MALFORMED_FUNCTION_CALL`: Candidates were blocked because of malformed and unparsable function call. - `FINISH_REASON_OTHER`: All other reasons that stopped the token - `FINISH_REASON_UNSPECIFIED`: The finish reason is unspecified. |
+|| `category` | The safety category to configure a threshold for. Acceptable values include the following: **Click to expand safety categories** - `HARM_CATEGORY_SEXUALLY_EXPLICIT` - `HARM_CATEGORY_HATE_SPEECH` - `HARM_CATEGORY_HARASSMENT` - `HARM_CATEGORY_DANGEROUS_CONTENT` |
+|| `probability` | The harm probability levels in the content. - `HARM_PROBABILITY_UNSPECIFIED` - `NEGLIGIBLE` - `LOW` - `MEDIUM` - `HIGH` |
+|| `blocked` | A boolean flag associated with a safety attribute that indicates if the model's input or output was blocked. |
+|| `startIndex` | An integer that specifies where a citation starts in the `content`. The `startIndex` is in bytes and calculated from the response encoded in UTF-8. |
+|| `endIndex` | An integer that specifies where a citation ends in the `content`. The `endIndex` is in bytes and calculated from the response encoded in UTF-8. |
+|| `url` | The URL of a citation source. Examples of a URL source might be a news website or a GitHub repository. |
+|| `title` | The title of a citation source. Examples of source titles might be that of a news article or a book. |
+|| `license` | The license associated with a citation. |
+|| `publicationDate` | The date a citation was published. Its valid formats are `YYYY`, `YYYY-MM`, and `YYYY-MM-DD`. |
+|| `avgLogprobs` | Average log probability of the candidate. |
+|| `logprobsResult` | Returns the top candidate tokens (`topCandidates`) and the actual chosen tokens (`chosenCandidates`) at each step. |
+|| `token` | Generative AI models break down text data into tokens for processing, which can be characters, words, or phrases. |
+|| `logProbability` | A log probability value that indicates the model's confidence for a particular token. |
+|| `promptTokenCount` | Number of tokens in the request. |
+|| `candidatesTokenCount` | Number of tokens in the response(s). |
+|| `totalTokenCount` | Number of tokens in the request and response(s). |
+|
+|> [!NOTE]
+|> **Note:** For billing purposes, tokens consumed by document inputs to Gemini 3 and later models are counted as image tokens.
+|
+|## Examples
+|
+|The following examples show how to generate content using Gemini models.
+|
+|### Text Generation
+|
+|Generate a text response from a text input.
+|
+|### Google Gen AI SDK for Python
+|
+|    from google import genai
+|    from google.genai.types import HttpOptions
+|
+|    client = genai.Client(http_options=HttpOptions(api_version="v1"))
+|    response = client.models.generate_content(
+|        model="gemini-3.5-flash",
+|        contents="How does AI work?",
+|    )
+|    print(response.text)
+|    # Example response:
+|    # Okay, let's break down how AI works. It's a broad field, so I'll focus on the ...
+|    #
+|    # Here's a simplified overview:
+|    # ...
+|
+|### Python (OpenAI)
+|
+|You can call the Inference API by using the OpenAI library. For more information, see
+|[Call Agent Platform models by using the OpenAI library](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/migrate/openai/overview).
+|
+|
+|    from google.auth import default
+|    import google.auth.transport.requests
+|
+|    import openai
+|
+|    # TODO(developer): Update and un-comment below lines
+|    # project_id = "PROJECT_ID"
+|    # location = "us-central1"
+|
+|    # Programmatically get an access token
+|    credentials, _ = default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+|    credentials.refresh(google.auth.transport.requests.Request())
+|
+|    # OpenAI Client
+|    client = openai.OpenAI(
+|        base_url=f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/endpoints/openapi",
+|        api_key=credentials.token,
+|    )
+|
+|    response = client.chat.completions.create(
+|        model="google/gemini-2.0-flash-001",
+|        messages=[{"role": "user", "content": "Why is the sky blue?"}],
+|    )
+|
+|    print(response)
+|
+|<br />
+|
+|### Go
+|
+|    import (
+|        "context"
+|        "fmt"
+|        "io"
+|
+|        "google.golang.org/genai"
+|    )
+|
+|    // generateWithText shows how to generate text using a text prompt.
+|    func generateWithText(w io.Writer) error {
+|        ctx := context.Background()
+|
+|        client, err := genai.NewClient(ctx, &genai.ClientConfig{
+|            HTTPOptions: genai.HTTPOptions{APIVersion: "v1"},
+|        })
+|        if err != nil {
+|            return fmt.Errorf("failed to create genai client: %w", err)
+|        }
+|
+|        resp, err := client.Models.GenerateContent(ctx,
+|            "gemini-2.5-flash",
+|            genai.Text("How does AI work?"),
+|            nil,
+|        )
+|        if err != nil {
+|            return fmt.Errorf("failed to generate content: %w", err)
+|        }
+|
+|        respText := resp.Text()
+|
+|        fmt.Fprintln(w, respText)
+|        // Example response:
+|        // That's a great question! Understanding how AI works can feel like ...
+|        // ...
+|        // **1. The Foundation: Data and Algorithms**
+|        // ...
+|
+|        return nil
+|    }
+|
+|### Using multimodal prompt
+|
+|Generate a text response from a multimodal input, such as text and an image.
+|
+|### Google Gen AI SDK for Python
+|
+|    from google import genai
+|    from google.genai.types import HttpOptions, Part
+|
+|    client = genai.Client(http_options=HttpOptions(api_version="v1"))
+|    response = client.models.generate_content(
+|        model="gemini-3.5-flash",
+|        contents=[
+|            "What is shown in this image?",
+|            Part.from_uri(
+|                file_uri="gs://cloud-samples-data/generative-ai/image/scones.jpg",
+|                mime_type="image/jpeg",
+|            ),
+|        ],
+|    )
+|    print(response.text)
+|    # Example response:
+|    # The image shows a flat lay of blueberry scones arranged on parchment paper. There are ...
+|
+|### Python (OpenAI)
+|
+|You can call the Inference API by using the OpenAI library. For more information, see
+|[Call Agent Platform models by using the OpenAI library](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/migrate/openai/overview).
+|
+|
+|
+|    from google.auth import default
+|    import google.auth.transport.requests
+|
+|    import openai
+|
+|    # TODO(developer): Update and un-comment below lines
+|    # project_id = "PROJECT_ID"
+|    # location = "us-central1"
+|
+|    # Programmatically get an access token
+|    credentials, _ = default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+|    credentials.refresh(google.auth.transport.requests.Request())
+|
+|    # OpenAI Client
+|    client = openai.OpenAI(
+|        base_url=f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/endpoints/openapi",
+|        api_key=credentials.token,
+|    )
+|
+|    response = client.chat.completions.create(
+|        model="google/gemini-2.0-flash-001",
+|        messages=[
+|            {
+|                "role": "user",
+|                "content": [
+|                    {"type": "text", "text": "Describe the following image:"},
+|                    {
+|                        "type": "image_url",
+|                        "image_url": "gs://cloud-samples-data/generative-ai/image/scones.jpg",
+|                    },
+|                ],
+|            }
+|        ],
+|    )
+|
+|    print(response)
+|
+|<br />
+|
+|### Go
+|
+|    import (
+|        "context"
+|        "fmt"
+|        "io"
+|
+|        genai "google.golang.org/genai"
+|    )
+|
+|    // generateWithTextImage shows how to generate text using both text and image input
+|    func generateWithTextImage(w io.Writer) error {
+|        ctx := context.Background()
+|
+|        client, err := genai.NewClient(ctx, &genai.ClientConfig{
+|            HTTPOptions: genai.HTTPOptions{APIVersion: "v1"},
+|        })
+|        if err != nil {
+|            return fmt.Errorf("failed to create genai client: %w", err)
+|        }
+|
+|        modelName := "gemini-2.5-flash"
+|        contents := []*genai.Content{
+|            {Parts: []*genai.Part{
+|                {Text: "What is shown in this image?"},
+|                {FileData: &genai.FileData{
+|                    // Image source: https://storage.googleapis.com/cloud-samples-data/generative-ai/image/scones.jpg
+|                    FileURI:  "gs://cloud-samples-data/generative-ai/image/scones.jpg",
+|                    MIMEType: "image/jpeg",
+|                }},
+|            },
+|                Role: genai.RoleUser},
+|        }
+|
+|        resp, err := client.Models.GenerateContent(ctx, modelName, contents, nil)
+|        if err != nil {
+|            return fmt.Errorf("failed to generate content: %w", err)
+|        }
+|
+|        respText := resp.Text()
+|
+|        fmt.Fprintln(w, respText)
+|
+|        // Example response:
+|        // The image shows an overhead shot of a rustic, artistic arrangement on a surface that ...
+|
+|        return nil
+|    }
+|
+|### Streaming text response
+|
+|Generate a streaming model response from a text input.
+|
+|### Google Gen AI SDK for Python
+|
+|    from google import genai
+|    from google.genai.types import HttpOptions
+|
+|    client = genai.Client(http_options=HttpOptions(api_version="v1"))
+|
+|    for chunk in client.models.generate_content_stream(
+|        model="gemini-3.5-flash",
+|        contents="Why is the sky blue?",
+|    ):
+|        print(chunk.text, end="")
+|    # Example response:
+|    # The
+|    #  sky appears blue due to a phenomenon called **Rayleigh scattering**. Here's
+|    #  a breakdown of why:
+|    # ...
+|
+|### Python (OpenAI)
+|
+|You can call the Inference API by using the OpenAI library. For more information, see
+|[Call Agent Platform models by using the OpenAI library](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/migrate/openai/overview).
+|
+|
+|    from google.auth import default
+|    import google.auth.transport.requests
+|
+|    import openai
+|
+|    # TODO(developer): Update and un-comment below lines
+|    # project_id = "PROJECT_ID"
+|    # location = "us-central1"
+|
+|    # Programmatically get an access token
+|    credentials, _ = default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+|    credentials.refresh(google.auth.transport.requests.Request())
+|
+|    # OpenAI Client
+|    client = openai.OpenAI(
+|        base_url=f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/endpoints/openapi",
+|        api_key=credentials.token,
+|    )
+|
+|    response = client.chat.completions.create(
+|        model="google/gemini-2.0-flash-001",
+|        messages=[{"role": "user", "content": "Why is the sky blue?"}],
+|        stream=True,
+|    )
+|    for chunk in response:
+|        print(chunk)
+|
+|<br />
+|
+|### Go
+|
+|    import (
+|        "context"
+|        "fmt"
+|        "io"
+|
+|        genai "google.golang.org/genai"
+|    )
+|
+|    // generateWithTextStream shows how to generate text stream using a text prompt.
+|    func generateWithTextStream(w io.Writer) error {
+|        ctx := context.Background()
+|
+|        client, err := genai.NewClient(ctx, &genai.ClientConfig{
+|            HTTPOptions: genai.HTTPOptions{APIVersion: "v1"},
+|        })
+|        if err != nil {
+|            return fmt.Errorf("failed to create genai client: %w", err)
+|        }
+|
+|        modelName := "gemini-2.5-flash"
+|        contents := genai.Text("Why is the sky blue?")
+|
+|        for resp, err := range client.Models.GenerateContentStream(ctx, modelName, contents, nil) {
+|            if err != nil {
+|                return fmt.Errorf("failed to generate content: %w", err)
+|            }
+|
+|            chunk := resp.Text()
+|
+|            fmt.Fprintln(w, chunk)
+|        }
+|
+|        // Example response:
+|        // The
+|        //  sky is blue
+|        //  because of a phenomenon called **Rayleigh scattering**. Here's the breakdown:
+|        // ...
+|
+|        return nil
+|    }
+|
+|## What's next
+|
+|- Learn more about [function
+|  calling](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/tools/function-calling).
+|- Learn more about [grounding](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/grounding/overview).
+
+# 2026-09-20 12:08:16.491334157 +0800 PST
++should we adopt content blocks for our ChatRequest.System?
+
+# 2026-09-21 15:44:31.211656347 +0800 PST
++do we passthrough token usage in responses?
+
+# 2026-09-22 09:37:39.672582404 +0800 PST
++/compact
+
+# 2026-09-22 09:38:27.381047215 +0800 PST
++what benefits are there of supporting systemd socket? and how might we add that support?
+
+# 2026-09-22 09:42:48.340772973 +0800 PST
++I would like to implement it yes but I also want to keep the existing mode incase a user isn't using systemd sockets.
+
+# 2026-09-22 09:47:59.95759692 +0800 PST
++awesome! can I disable simpllm service on startup now?
+
+# 2026-09-22 09:48:47.289232914 +0800 PST
++can we place all systemd config files in a folder. called systemd
+
+# 2026-09-22 09:59:52.168569712 +0800 PST
++/compact
+
+# 2026-09-22 10:03:55.691413677 +0800 PST
++one feature that I would like to try to think about is... sometimes I just want to run any model that is current loaded on my gpu. propose what the config might look like for that and what features are needed on the upstream to support it
+
+# 2026-09-22 10:05:43.724259517 +0800 PST
++I want the client to just send model: "default" or model: "any/local"
+
+# 2026-09-22 10:07:23.237630426 +0800 PST
++hmm this isn't what I want. perhaps what I am looking for is a custom upstream. but that is outside of the scope of this project.
+
+# 2026-09-22 10:09:08.151679152 +0800 PST
++what do you think about exposing our canonical format as another api endpoint. /simpllm/replies

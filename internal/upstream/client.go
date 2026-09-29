@@ -235,6 +235,8 @@ func DetectFormat(path string, body []byte) formats.WireFormat {
 		return formats.WireOpenAIResponses
 	case strings.Contains(path, "/chat/completions"):
 		return formats.WireOpenAIChatCompletions
+	case strings.Contains(path, "/generateContent"), strings.Contains(path, ":generateContent"), strings.Contains(path, ":streamGenerateContent"):
+		return formats.WireGeminiGenerateContent
 	case strings.Contains(path, "/embeddings"):
 		return formats.WireOpenAIChatCompletions
 	case strings.Contains(path, "/images/generations"):
