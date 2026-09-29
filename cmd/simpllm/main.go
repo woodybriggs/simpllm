@@ -79,6 +79,7 @@ func run(configPath string, noWatch bool) error {
 	var servers []*http.Server
 	var listeners []net.Listener
 	var unixPath string
+	launchdSocket := false
 
 	reload := func() error {
 		// Load new config.
@@ -112,14 +113,22 @@ func run(configPath string, noWatch bool) error {
 				}
 
 				if cfg.Listen.Unix != "" {
-					os.Remove(cfg.Listen.Unix)
-					ln, err := net.Listen("unix", cfg.Listen.Unix)
-					if err != nil {
-						log.Printf("ERROR unix listen %s: %v", cfg.Listen.Unix, err)
-					} else {
+					// Try to inherit socket from launchd (FD 3).
+					if ln := tryInheritedSocket(); ln != nil {
 						listeners = append(listeners, ln)
 						unixPath = cfg.Listen.Unix
-						log.Printf("  unix: listening on %s", cfg.Listen.Unix)
+						launchdSocket = true
+						log.Printf("  unix: inherited socket, serving on %s", cfg.Listen.Unix)
+					} else {
+						os.Remove(cfg.Listen.Unix)
+						ln, err := net.Listen("unix", cfg.Listen.Unix)
+						if err != nil {
+							log.Printf("ERROR unix listen %s: %v", cfg.Listen.Unix, err)
+						} else {
+							listeners = append(listeners, ln)
+							unixPath = cfg.Listen.Unix
+							log.Printf("  unix: listening on %s", cfg.Listen.Unix)
+						}
 					}
 				}
 			}
@@ -161,17 +170,17 @@ func run(configPath string, noWatch bool) error {
 					return err
 				}
 			case sig := <-sigs:
-				return shutdown(servers, unixPath, sig)
+				return shutdown(servers, unixPath, launchdSocket, sig)
 			}
 		}
 	}
 
 	// No watcher — just wait for OS signal.
 	sig := <-sigs
-	return shutdown(servers, unixPath, sig)
+	return shutdown(servers, unixPath, launchdSocket, sig)
 }
 
-func shutdown(servers []*http.Server, unixPath string, sig os.Signal) error {
+func shutdown(servers []*http.Server, unixPath string, launchdSocket bool, sig os.Signal) error {
 	log.Printf("received %s, shutting down...", sig)
 
 	for _, srv := range servers {
@@ -182,10 +191,29 @@ func shutdown(servers []*http.Server, unixPath string, sig os.Signal) error {
 		}
 	}
 
-	if unixPath != "" {
+	// Clean up unix socket (only if we created it, not when inherited from launchd).
+	if unixPath != "" && !launchdSocket {
 		os.Remove(unixPath)
 	}
 
 	log.Printf("goodbye")
 	return nil
+}
+
+// tryInheritedSocket attempts to inherit a socket from launchd or systemd (FD 3).
+// Both systems use socket activation: they create the socket and pass the file
+// descriptor to the process. If no socket was provided, this returns nil and
+// the caller creates one normally.
+func tryInheritedSocket() net.Listener {
+	f := os.NewFile(3, "launchd-socket")
+	if f == nil {
+		return nil
+	}
+
+	ln, err := net.FileListener(f)
+	if err != nil {
+		f.Close()
+		return nil
+	}
+	return ln
 }

@@ -24,6 +24,7 @@ const (
 	WireAnthropicMessages     WireFormat = "anthropic/messages"
 	WireOpenAIResponses       WireFormat = "openai/responses"
 	WireGeminiGenerateContent WireFormat = "gemini/generateContent"
+	WireSystemOne             WireFormat = "systemone"
 )
 
 // TranslateRequest converts an incoming request body from sourceFormat to targetFormat.

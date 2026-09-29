@@ -233,6 +233,8 @@ func DetectFormat(path string, body []byte) formats.WireFormat {
 		return formats.WireAnthropicMessages
 	case strings.Contains(path, "/responses"):
 		return formats.WireOpenAIResponses
+	case strings.Contains(path, "/systemone"):
+		return formats.WireSystemOne
 	case strings.Contains(path, "/chat/completions"):
 		return formats.WireOpenAIChatCompletions
 	case strings.Contains(path, "/generateContent"), strings.Contains(path, ":generateContent"), strings.Contains(path, ":streamGenerateContent"):
@@ -251,13 +253,20 @@ func detectFromBody(body []byte) formats.WireFormat {
 		Messages []struct {
 			Role string `json:"role"`
 		} `json:"messages"`
-		System any    `json:"system"`
-		Input  any    `json:"input"`
-		MaxTok int    `json:"max_tokens"`
+		System    any `json:"system"`
+		Input     any `json:"input"`
+		Questions any `json:"questions"`
+		State     any `json:"state"`
+		MaxTok    int `json:"max_tokens"`
 	}
 
 	if json.Unmarshal(body, &probe) != nil {
 		return formats.WireOpenAIChatCompletions
+	}
+
+	// System One has "questions" and "state" but no "messages".
+	if probe.Questions != nil && probe.State != nil && len(probe.Messages) == 0 {
+		return formats.WireSystemOne
 	}
 
 	if probe.System != nil && probe.MaxTok > 0 && len(probe.Messages) > 0 {
