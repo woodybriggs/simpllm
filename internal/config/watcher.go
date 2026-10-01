@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,7 +17,7 @@ type Watcher struct {
 	dirs    []string
 	changes chan struct{}
 	done    chan struct{}
-	mu      sync.Mutex
+	closeMu sync.Once
 }
 
 // NewWatcher creates a watcher for the given config file paths.
@@ -64,7 +65,8 @@ func (w *Watcher) Changes() <-chan struct{} {
 // Close stops watching.
 func (w *Watcher) Close() error {
 	close(w.done)
-	return w.fs.Close()
+	w.closeMu.Do(func() { w.fs.Close() })
+	return nil
 }
 
 func (w *Watcher) loop() {
@@ -108,6 +110,20 @@ func (w *Watcher) loop() {
 			if !ok {
 				return
 			}
+			// A bad file descriptor means the underlying watcher is dead.
+			// Close fsnotify to stop its internal goroutine from spinning,
+			// then park until Close() is called. The goroutine stays alive
+			// to maintain Go runtime signal-handling state on macOS
+			// (Go 1.27.1 signal_recv inconsistent state bug).
+			if isWatcherDead(err) {
+				log.Printf("config watcher: %v — stopped", err)
+				// Don't close fsnotify here — doing so from the watcher
+				// goroutine can invalidate FDs still in use by the main
+				// goroutine (kqueue close races with socket creation on
+				// macOS). Just park until Close() handles cleanup.
+				<-w.done
+				return
+			}
 			log.Printf("config watcher error: %v", err)
 		}
 	}
@@ -126,4 +142,11 @@ func (w *Watcher) isRelevant(name string) bool {
 		}
 	}
 	return false
+}
+
+// isWatcherDead reports whether an fsnotify error indicates the watcher is
+// permanently broken (e.g. bad file descriptor under launchd).
+func isWatcherDead(err error) bool {
+	s := err.Error()
+	return strings.Contains(s, "bad file descriptor") || strings.Contains(s, "closed network connection")
 }
